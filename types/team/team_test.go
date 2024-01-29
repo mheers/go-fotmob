@@ -32,3 +32,24 @@ func TestUnmarshalParticipant(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, ptr.Float32(8.18), p.Value)
 }
+
+func TestUnmarshalSquad(t *testing.T) {
+	data := []byte(`[
+        [
+            "coach",
+            [
+                {
+                    "id": 179347,
+                    "name": "Thomas Tuchel",
+                    "ccode": "GER",
+                    "cname": "Germany"
+                }
+            ]
+        ]
+	]`)
+
+	s := &Squad{}
+	err := json.Unmarshal(data, &s)
+	require.NoError(t, err)
+	require.Equal(t, ptr.String("Thomas Tuchel"), s.Coach.Name)
+}

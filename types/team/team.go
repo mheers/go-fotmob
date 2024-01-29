@@ -20,7 +20,7 @@ type Team struct {
 	Overview            *Overview        `json:"overview,omitempty"`
 	Stats               *TeamStats       `json:"stats,omitempty"`
 	Fixtures            *TeamFixtures    `json:"fixtures,omitempty"`
-	Squad               [][]*SquadClass  `json:"squad,omitempty"`
+	Squad               *Squad           `json:"squad,omitempty"`
 	History             *History         `json:"history,omitempty"`
 }
 
@@ -593,7 +593,53 @@ type Widget struct {
 	City     *string  `json:"city,omitempty"`
 }
 
-type SquadClass struct {
+type Squad struct {
+	Coach       *SquadMember   `json:"coach,omitempty"`
+	Attackers   []*SquadMember `json:"attackers,omitempty"`
+	Defenders   []*SquadMember `json:"defenders,omitempty"`
+	Goalkeepers []*SquadMember `json:"goalkeepers,omitempty"`
+	Midfielders []*SquadMember `json:"midfielders,omitempty"`
+}
+
+func (s *Squad) UnmarshalJSON(data []byte) error {
+	var rawSquad [][]interface{}
+	if err := json.Unmarshal(data, &rawSquad); err != nil {
+		return err
+	}
+
+	for _, rawParticipant := range rawSquad {
+		roleS := rawParticipant[0].(string)
+		role := Role(roleS)
+
+		participants := rawParticipant[1].([]interface{})
+		for _, rawParticipant := range participants {
+			member := &SquadMember{}
+			d, err := json.Marshal(rawParticipant)
+			if err != nil {
+				return err
+			}
+			if err := json.Unmarshal(d, member); err != nil {
+				return err
+			}
+			switch role {
+			case CoachRole:
+				s.Coach = member
+			case Goalkeepers:
+				s.Goalkeepers = append(s.Goalkeepers, member)
+			case Defenders:
+				s.Defenders = append(s.Defenders, member)
+			case Midfielders:
+				s.Midfielders = append(s.Midfielders, member)
+			case Attackers:
+				s.Attackers = append(s.Attackers, member)
+			}
+		}
+	}
+
+	return nil
+}
+
+type SquadMember struct {
 	ID        *int    `json:"id,omitempty"`
 	Name      *string `json:"name,omitempty"`
 	Ccode     *string `json:"ccode,omitempty"`
@@ -605,6 +651,7 @@ type SquadClass struct {
 type Role string
 
 const (
+	CoachRole   Role = "coach"
 	Attackers   Role = "attackers"
 	Defenders   Role = "defenders"
 	Goalkeepers Role = "goalkeepers"
