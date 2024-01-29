@@ -11,7 +11,7 @@ func TestGetMatches(t *testing.T) {
 	matches, err := f.GetMatchesByDate("20190301")
 	require.NoError(t, err)
 	require.NotEmpty(t, matches)
-	require.Len(t, matches, 66)
+	require.Len(t, matches.Leagues, 66)
 }
 
 func TestGetLeague(t *testing.T) {
@@ -46,7 +46,6 @@ func TestGetTeamSeasonStats(t *testing.T) {
 }
 
 func TestGetPlayer(t *testing.T) {
-	// TODO: fix
 	f := NewFotmob()
 	player, err := f.GetPlayer(194165) // Harry Kane
 	require.NoError(t, err)

@@ -1,6 +1,10 @@
 package player
 
-import "time"
+import (
+	"encoding/json"
+	"errors"
+	"time"
+)
 
 type Player struct {
 	ID                  *int                 `json:"id,omitempty"`
@@ -63,16 +67,16 @@ type Rating struct {
 }
 
 type PurpleTournamentStat struct {
-	LeagueID     *int    `json:"leagueId,omitempty"`
-	TournamentID *int    `json:"tournamentId,omitempty"`
-	LeagueName   *string `json:"leagueName,omitempty"`
-	SeasonRating *int    `json:"seasonRating,omitempty"`
-	IsFriendly   *bool   `json:"isFriendly,omitempty"`
-	SeasonName   *string `json:"seasonName,omitempty"`
-	Goals        *string `json:"goals,omitempty"`
-	Assists      *string `json:"assists,omitempty"`
-	Appearances  *string `json:"appearances,omitempty"`
-	Rating       *Rating `json:"rating,omitempty"`
+	LeagueID     *int     `json:"leagueId,omitempty"`
+	TournamentID *int     `json:"tournamentId,omitempty"`
+	LeagueName   *string  `json:"leagueName,omitempty"`
+	SeasonRating *float32 `json:"seasonRating,omitempty"`
+	IsFriendly   *bool    `json:"isFriendly,omitempty"`
+	SeasonName   *string  `json:"seasonName,omitempty"`
+	Goals        *string  `json:"goals,omitempty"`
+	Assists      *string  `json:"assists,omitempty"`
+	Appearances  *string  `json:"appearances,omitempty"`
+	Rating       *Rating  `json:"rating,omitempty"`
 }
 
 type TeamEntry struct {
@@ -89,6 +93,52 @@ type TeamEntry struct {
 	Goals            *string     `json:"goals,omitempty"`
 	Assists          *string     `json:"assists,omitempty"`
 	HasUncertainData *bool       `json:"hasUncertainData,omitempty"`
+}
+
+func (t *TeamEntry) UnmarshalJSON(data []byte) error {
+	var v map[string]interface{}
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+
+	startDate := v["startDate"]
+	endDate := v["endDate"]
+
+	v2 := v
+	v2["startDate"] = nil
+	v2["endDate"] = nil
+
+	d, err := json.Marshal(v2)
+	if err != nil {
+		return err
+	}
+
+	type Alias TeamEntry
+	a := &Alias{}
+
+	if err := json.Unmarshal(d, a); err != nil {
+		return err
+	}
+
+	*t = TeamEntry(*a)
+
+	if startDate != nil {
+		sd, err := time.Parse("2006-01-02T15:04:05", startDate.(string))
+		if err != nil {
+			return err
+		}
+		t.StartDate = &sd
+	}
+
+	if endDate != nil {
+		ed, err := time.Parse("2006-01-02T15:04:05", endDate.(string))
+		if err != nil {
+			return err
+		}
+		t.EndDate = &ed
+	}
+
+	return nil
 }
 
 type Youth struct {
@@ -228,6 +278,22 @@ type Fallback struct {
 	String *string  `json:"string,omitempty"`
 }
 
+func (f *Fallback) UnmarshalJSON(data []byte) error {
+	var s *string
+	if err := json.Unmarshal(data, &s); err == nil {
+		f.String = s
+		return nil
+	}
+
+	var n *float64
+	if err := json.Unmarshal(data, &n); err == nil {
+		f.Number = n
+		return nil
+	}
+
+	return errors.New("fallback: invalid type")
+}
+
 type PositionDescription struct {
 	Positions           []Position        `json:"positions,omitempty"`
 	PrimaryPosition     *PrimaryPosition  `json:"primaryPosition,omitempty"`
@@ -319,9 +385,9 @@ type Traits struct {
 }
 
 type TraitsItem struct {
-	Key   *string `json:"key,omitempty"`
-	Title *string `json:"title,omitempty"`
-	Value *int    `json:"value,omitempty"`
+	Key   *string  `json:"key,omitempty"`
+	Title *string  `json:"title,omitempty"`
+	Value *float32 `json:"value,omitempty"`
 }
 
 type Trophies struct {
