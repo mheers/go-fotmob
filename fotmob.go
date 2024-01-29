@@ -3,7 +3,6 @@ package fotmob
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"regexp"
 
@@ -74,16 +73,7 @@ func (f *Fotmob) SafeTypeCastFetch(url string, dst any) error {
 	// 	return err
 	// }
 
-	// if err := json.NewDecoder(res.Body).Decode(&dst); err != nil {
-	// 	return err
-	// }
-
-	data, err := io.ReadAll(res.Body)
-	if err != nil {
-		return err
-	}
-
-	if err := json.Unmarshal(data, &dst); err != nil {
+	if err := json.NewDecoder(res.Body).Decode(&dst); err != nil {
 		return err
 	}
 
@@ -153,7 +143,6 @@ func (f *Fotmob) GetTeam(id int, tab string, teamType string, timeZone string) (
 	url := fmt.Sprintf("%s?id=%d&tab=%s&type=%s&timeZone=%s", f.TeamsUrl, id, tab, teamType, timeZone)
 	l := &team.Team{}
 
-	// TODO: fix: json: cannot unmarshal string into Go struct field Player.stats.players.participant of type float32
 	if err := f.SafeTypeCastFetch(url, l); err != nil {
 		return nil, err
 	}

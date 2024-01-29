@@ -1,7 +1,12 @@
 package team
 
 import (
+	"encoding/json"
+	"strconv"
+	"strings"
 	"time"
+
+	"github.com/aws/smithy-go/ptr"
 )
 
 type Team struct {
@@ -530,6 +535,51 @@ type Participant struct {
 	Injured            bool        `json:"injured"`
 	Rank               *int        `json:"rank,omitempty"`
 	Value              *float32    `json:"value,omitempty"`
+}
+
+func (p *Participant) UnmarshalJSON(data []byte) error {
+	var v map[string]interface{}
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+
+	value := v["value"]
+
+	v2 := v
+	v2["value"] = nil
+
+	d, err := json.Marshal(v2)
+	if err != nil {
+		return err
+	}
+
+	type Alias Participant
+	a := &Alias{}
+
+	if err := json.Unmarshal(d, a); err != nil {
+		return err
+	}
+
+	*p = Participant(*a)
+
+	if value == nil {
+		return nil
+	}
+	switch value := value.(type) {
+	case float64:
+		p.Value = ptr.Float32(float32(value))
+		return nil
+	case string:
+		value = strings.Trim(value, "%")
+		vf64, err := strconv.ParseFloat(value, 32)
+		if err != nil {
+			return err
+		}
+		p.Value = ptr.Float32(float32(vf64))
+		return nil
+	}
+
+	return nil
 }
 
 type Venue struct {

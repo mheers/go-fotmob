@@ -32,7 +32,6 @@ func TestGetAllLeagues(t *testing.T) {
 }
 
 func TestGetTeam(t *testing.T) {
-	// TODO: fix
 	f := NewFotmob()
 	team, err := f.GetTeam(9823, "overview", "league", "Europe/Berlin") // FC Bayern München
 	require.NoError(t, err)
