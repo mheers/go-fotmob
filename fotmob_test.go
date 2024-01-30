@@ -53,7 +53,6 @@ func TestGetPlayer(t *testing.T) {
 }
 
 func TestGetMatchDetails(t *testing.T) {
-	// TODO: fix
 	f := NewFotmob()
 	matchDetails, err := f.GetMatchDetails(4221721) // Werder Bremen vs. FC Bayern München
 	require.NoError(t, err)
@@ -61,7 +60,6 @@ func TestGetMatchDetails(t *testing.T) {
 }
 
 func TestGetWorldNews(t *testing.T) {
-	// TODO: fix: is empty right now
 	f := NewFotmob()
 	worldNews, err := f.GetWorldNews(1, "en")
 	require.NoError(t, err)

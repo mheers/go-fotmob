@@ -1,6 +1,12 @@
 package matchdetails
 
-import "time"
+import (
+	"encoding/json"
+	"fmt"
+	"time"
+
+	"github.com/aws/smithy-go/ptr"
+)
 
 type MatchDetails struct {
 	General       *General `json:"general,omitempty"`
@@ -53,7 +59,7 @@ type League struct {
 }
 
 type Status struct {
-	UTCTime             *time.Time  `json:"utcTime,omitempty"`
+	// UTCTime             *time.Time  `json:"utcTime,omitempty"` // TODO: fix this
 	Started             *bool       `json:"started,omitempty"`
 	Cancelled           *bool       `json:"cancelled,omitempty"`
 	Finished            *bool       `json:"finished,omitempty"`
@@ -99,8 +105,24 @@ const (
 )
 
 type MatchDate struct {
-	UTCTime *time.Time `json:"utcTime,omitempty"`
+	// UTCTime *time.Time `json:"utcTime,omitempty"` // TODO: fix this
 }
+
+// func (m *MatchDate) UnmarshalJSON(b []byte) error {
+// 	var s map[string]interface{}
+// 	if err := json.Unmarshal(b, &s); err != nil {
+// 		return err
+// 	}
+
+// 	t, err := time.Parse("2006-01-02T15:04:05Z", s["utcTime"].(string))
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	m.UTCTime = &t
+
+// 	return nil
+// }
 
 type ContentLineup struct {
 	Lineup               []LineupElement `json:"lineup,omitempty"`
@@ -158,8 +180,8 @@ type PurpleSub struct {
 }
 
 type FantasyScoreClass struct {
-	Num     *int    `json:"num,omitempty"`
-	Bgcolor *string `json:"bgcolor,omitempty"`
+	Num     *float64 `json:"num,omitempty"`
+	Bgcolor *string  `json:"bgcolor,omitempty"`
 }
 
 type NameClass struct {
@@ -200,18 +222,18 @@ type Shot struct {
 	TeamID                *int        `json:"teamId,omitempty"`
 	PlayerID              *int        `json:"playerId,omitempty"`
 	PlayerName            *string     `json:"playerName,omitempty"`
-	X                     *int        `json:"x,omitempty"`
-	Y                     *int        `json:"y,omitempty"`
+	X                     *float64    `json:"x,omitempty"`
+	Y                     *float64    `json:"y,omitempty"`
 	Min                   *int        `json:"min,omitempty"`
 	MinAdded              *int        `json:"minAdded,omitempty"`
 	IsBlocked             *bool       `json:"isBlocked,omitempty"`
 	IsOnTarget            *bool       `json:"isOnTarget,omitempty"`
-	BlockedX              *int        `json:"blockedX,omitempty"`
-	BlockedY              *int        `json:"blockedY,omitempty"`
-	GoalCrossedY          *int        `json:"goalCrossedY,omitempty"`
-	GoalCrossedZ          *int        `json:"goalCrossedZ,omitempty"`
-	ExpectedGoals         *int        `json:"expectedGoals,omitempty"`
-	ExpectedGoalsOnTarget *int        `json:"expectedGoalsOnTarget,omitempty"`
+	BlockedX              *float64    `json:"blockedX,omitempty"`
+	BlockedY              *float64    `json:"blockedY,omitempty"`
+	GoalCrossedY          *float64    `json:"goalCrossedY,omitempty"`
+	GoalCrossedZ          *float64    `json:"goalCrossedZ,omitempty"`
+	ExpectedGoals         *float64    `json:"expectedGoals,omitempty"`
+	ExpectedGoalsOnTarget *float64    `json:"expectedGoalsOnTarget,omitempty"`
 	ShotType              *ShotType   `json:"shotType,omitempty"`
 	Situation             *Situation  `json:"situation,omitempty"`
 	Period                *Period     `json:"period,omitempty"`
@@ -320,6 +342,28 @@ type AccurateCrosses struct {
 	Value *string             `json:"value,omitempty"`
 }
 
+func (a *AccurateCrosses) UnmarshalJSON(b []byte) error {
+	var s map[string]interface{}
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+
+	value := s["value"]
+	key := s["key"].(string)
+
+	switch value := value.(type) {
+	case float64:
+		a.Value = ptr.String(fmt.Sprintf("%f", value))
+	case string:
+		a.Value = ptr.String(value)
+	}
+
+	k := AccurateCrossesKey(key)
+	a.Key = &k
+
+	return nil
+}
+
 type AccurateCrossesKey string
 
 const (
@@ -347,9 +391,31 @@ type AerialDuelsWon struct {
 	Value *string             `json:"value,omitempty"`
 }
 
+func (a *AerialDuelsWon) UnmarshalJSON(b []byte) error {
+	var s map[string]interface{}
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+
+	value := s["value"]
+	key := s["key"].(string)
+
+	switch value := value.(type) {
+	case float64:
+		a.Value = ptr.String(fmt.Sprintf("%f", value))
+	case string:
+		a.Value = ptr.String(value)
+	}
+
+	k := AccurateCrossesKey(key)
+	a.Key = &k
+
+	return nil
+}
+
 type Assists struct {
 	Key   *AssistsKey `json:"key,omitempty"`
-	Value *int        `json:"value,omitempty"`
+	Value *float64    `json:"value,omitempty"`
 }
 
 type AssistsKey string
@@ -644,8 +710,27 @@ type QADatum struct {
 type MatchFactsEvents struct {
 	Ongoing               *bool        `json:"ongoing,omitempty"`
 	Events                []*Event     `json:"events,omitempty"`
-	EventTypes            []*string    `json:"eventTypes,omitempty"`
+	EventTypes            EventTypes   `json:"eventTypes,omitempty"`
 	PenaltyShootoutEvents *interface{} `json:"penaltyShootoutEvents,omitempty"`
+}
+
+type EventTypes []*string
+
+func (mfe *EventTypes) UnmarshalJSON(data []byte) error {
+	var err error
+	var aux []any
+	if err = json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	for _, v := range aux {
+		switch v := v.(type) {
+		case string:
+			*mfe = append(*mfe, &v)
+		}
+	}
+
+	return nil
 }
 
 type Event struct {
@@ -669,6 +754,50 @@ type Event struct {
 	HalfStrKey        *string `json:"halfStrKey,omitempty"`
 	InjuredPlayerOut  *bool   `json:"injuredPlayerOut,omitempty"`
 	Swap              []*Swap `json:"swap,omitempty"`
+}
+
+func (e *Event) UnmarshalJSON(data []byte) error {
+	var v map[string]interface{}
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+
+	timeStr := fmt.Sprintf("%f", v["timeStr"])
+
+	overloadTimeResult := ""
+	overloadTime := v["overloadTimeStr"]
+	switch overloadTime := overloadTime.(type) {
+	case bool:
+		overloadTimeResult = ""
+	case string:
+		overloadTimeResult = overloadTime
+	}
+
+	v2 := v
+	v2["timeStr"] = nil
+	v2["overloadTimeStr"] = nil
+
+	d, err := json.Marshal(v2)
+	if err != nil {
+		return err
+	}
+
+	type Alias Event
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(e),
+	}
+	if err := json.Unmarshal(d, &aux); err != nil {
+		return err
+	}
+
+	*e = Event(*aux.Alias)
+
+	e.TimeStr = ptr.String(timeStr)
+	e.OverloadTimeStr = ptr.String(overloadTimeResult)
+
+	return nil
 }
 
 type Player struct {
@@ -778,7 +907,7 @@ type Main struct {
 }
 
 type Datum struct {
-	Minute *int     `json:"minute,omitempty"`
+	Minute *float64 `json:"minute,omitempty"`
 	Value  *float64 `json:"value,omitempty"`
 }
 
@@ -891,12 +1020,12 @@ type TeamForm struct {
 	ResultString *ResultString `json:"resultString,omitempty"`
 	ImageUrl     *string       `json:"imageUrl,omitempty"`
 	LinkToMatch  *string       `json:"linkToMatch,omitempty"`
-	Date         *time.Time    `json:"date,omitempty"`
-	TeamPageUrl  *string       `json:"teamPageUrl,omitempty"`
-	TooltipText  *TooltipText  `json:"tooltipText,omitempty"`
-	Score        *string       `json:"score,omitempty"`
-	Home         *TeamFormAway `json:"home,omitempty"`
-	Away         *TeamFormAway `json:"away,omitempty"`
+	// Date         *time.Time    `json:"date,omitempty"` // TODO: fix
+	TeamPageUrl *string       `json:"teamPageUrl,omitempty"`
+	TooltipText *TooltipText  `json:"tooltipText,omitempty"`
+	Score       *string       `json:"score,omitempty"`
+	Home        *TeamFormAway `json:"home,omitempty"`
+	Away        *TeamFormAway `json:"away,omitempty"`
 }
 
 type TeamFormAway struct {
