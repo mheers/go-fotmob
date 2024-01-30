@@ -59,7 +59,7 @@ type League struct {
 }
 
 type Status struct {
-	// UTCTime             *time.Time  `json:"utcTime,omitempty"` // TODO: fix this
+	UTCTime             *time.Time  `json:"utcTime,omitempty"`
 	Started             *bool       `json:"started,omitempty"`
 	Cancelled           *bool       `json:"cancelled,omitempty"`
 	Finished            *bool       `json:"finished,omitempty"`
@@ -105,7 +105,7 @@ const (
 )
 
 type MatchDate struct {
-	// UTCTime *time.Time `json:"utcTime,omitempty"` // TODO: fix this
+	UTCTime *time.Time `json:"utcTime,omitempty"`
 }
 
 // func (m *MatchDate) UnmarshalJSON(b []byte) error {
@@ -1020,12 +1020,57 @@ type TeamForm struct {
 	ResultString *ResultString `json:"resultString,omitempty"`
 	ImageUrl     *string       `json:"imageUrl,omitempty"`
 	LinkToMatch  *string       `json:"linkToMatch,omitempty"`
-	// Date         *time.Time    `json:"date,omitempty"` // TODO: fix
-	TeamPageUrl *string       `json:"teamPageUrl,omitempty"`
-	TooltipText *TooltipText  `json:"tooltipText,omitempty"`
-	Score       *string       `json:"score,omitempty"`
-	Home        *TeamFormAway `json:"home,omitempty"`
-	Away        *TeamFormAway `json:"away,omitempty"`
+	UTCTime      *time.Time    `json:"date,omitempty"` // TODO: fix
+	TeamPageUrl  *string       `json:"teamPageUrl,omitempty"`
+	TooltipText  *TooltipText  `json:"tooltipText,omitempty"`
+	Score        *string       `json:"score,omitempty"`
+	Home         *TeamFormAway `json:"home,omitempty"`
+	Away         *TeamFormAway `json:"away,omitempty"`
+}
+
+type Date struct {
+}
+
+func (tf *TeamForm) UnmarshalJSON(data []byte) error {
+	var v map[string]interface{}
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+
+	date := v["date"].(map[string]interface{})
+	utcTime := date["utcTime"]
+	var utcTimeResult time.Time
+	switch utcTime := utcTime.(type) {
+	case string:
+		t, err := time.Parse("2006-01-02T15:04:05Z", utcTime)
+		if err != nil {
+			return err
+		}
+		utcTimeResult = t
+	}
+
+	v2 := v
+	v2["date"] = nil
+
+	d, err := json.Marshal(v2)
+	if err != nil {
+		return err
+	}
+
+	type Alias TeamForm
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(tf),
+	}
+	if err := json.Unmarshal(d, &aux); err != nil {
+		return err
+	}
+
+	*tf = TeamForm(*aux.Alias)
+	tf.UTCTime = &utcTimeResult
+
+	return nil
 }
 
 type TeamFormAway struct {
