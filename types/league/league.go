@@ -1,6 +1,12 @@
 package league
 
-import "time"
+import (
+	"encoding/json"
+	"fmt"
+	"time"
+
+	"github.com/aws/smithy-go/ptr"
+)
 
 type League struct {
 	Tabs                []string       `json:"tabs,omitempty"`
@@ -49,12 +55,48 @@ type Matches struct {
 
 type AllMatch struct {
 	Round     *int               `json:"round,omitempty"`
-	RoundName *int               `json:"roundName,omitempty"`
+	RoundName *string            `json:"roundName,omitempty"`
 	PageUrl   *string            `json:"pageUrl,omitempty"`
 	ID        *string            `json:"id,omitempty"`
 	Home      *NextOpponentClass `json:"home,omitempty"`
 	Away      *NextOpponentClass `json:"away,omitempty"`
 	Status    *Status            `json:"status,omitempty"`
+}
+
+func (a *AllMatch) UnmarshalJSON(b []byte) error {
+	var s map[string]interface{}
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+
+	roundName := s["roundName"]
+	s["roundName"] = nil
+
+	d, err := json.Marshal(s)
+	if err != nil {
+		return err
+	}
+
+	type Alias AllMatch
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(a),
+	}
+	if err := json.Unmarshal(d, &aux); err != nil {
+		return err
+	}
+
+	*a = AllMatch(*aux.Alias)
+
+	switch roundName := roundName.(type) {
+	case float64:
+		a.RoundName = ptr.String(fmt.Sprintf("%f", roundName))
+	case string:
+		a.RoundName = ptr.String(roundName)
+	}
+
+	return nil
 }
 
 type NextOpponentClass struct {

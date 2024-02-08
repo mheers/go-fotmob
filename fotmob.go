@@ -20,35 +20,37 @@ import (
 const baseUrl = "https://www.fotmob.com/api/"
 
 type Fotmob struct {
-	MatchesUrl          string
-	LeaguesUrl          string
-	AllLeaguesUrl       string
-	TeamsUrl            string
-	PlayerUrl           string
-	TeamsSeasonStatsUrl string
-	MatchDetailsUrl     string
-	SearchUrl           string
-	TransfersUrl        string
-	WorldNewsUrl        string
-	DefaultTimeZone     string
-	DefaultLang         string
-	Map                 map[interface{}]interface{}
+	MatchesUrl               string
+	LeaguesUrl               string
+	LeagueSeasonDeepStatsUrl string
+	AllLeaguesUrl            string
+	TeamsUrl                 string
+	PlayerUrl                string
+	TeamsSeasonStatsUrl      string
+	MatchDetailsUrl          string
+	SearchUrl                string
+	TransfersUrl             string
+	WorldNewsUrl             string
+	DefaultTimeZone          string
+	DefaultLang              string
+	Map                      map[interface{}]interface{}
 }
 
 func NewFotmob() *Fotmob {
 	return &Fotmob{
-		MatchesUrl:          baseUrl + "matches",
-		LeaguesUrl:          baseUrl + "leagues",
-		AllLeaguesUrl:       baseUrl + "allLeagues",
-		TeamsUrl:            baseUrl + "teams",
-		TeamsSeasonStatsUrl: baseUrl + "teamseasonstats",
-		PlayerUrl:           baseUrl + "playerData",
-		MatchDetailsUrl:     baseUrl + "matchDetails",
-		SearchUrl:           baseUrl + "searchapi",
-		TransfersUrl:        baseUrl + "transfers",
-		WorldNewsUrl:        baseUrl + "worldnews",
-		DefaultTimeZone:     "Europe/Berlin",
-		DefaultLang:         "en",
+		MatchesUrl:               baseUrl + "matches",
+		LeaguesUrl:               baseUrl + "leagues",
+		LeagueSeasonDeepStatsUrl: baseUrl + "leagueseasondeepstats",
+		AllLeaguesUrl:            baseUrl + "allLeagues",
+		TeamsUrl:                 baseUrl + "teams",
+		TeamsSeasonStatsUrl:      baseUrl + "teamseasonstats",
+		PlayerUrl:                baseUrl + "playerData",
+		MatchDetailsUrl:          baseUrl + "matchDetails",
+		SearchUrl:                baseUrl + "searchapi",
+		TransfersUrl:             baseUrl + "transfers",
+		WorldNewsUrl:             baseUrl + "worldnews",
+		DefaultTimeZone:          "Europe/Berlin",
+		DefaultLang:              "en",
 	}
 }
 
@@ -93,7 +95,7 @@ func (f *Fotmob) GetMatchesByDate(date string) (*matches.Matches, error) {
 	return nil, nil
 }
 
-// GetLeague returns a league by id; tab, leagueType and timeZone are optional
+// GetLeague returns a league by id; tab ("overview" (default) ,"table","matches","stats","transfers"), leagueType and timeZone are optional
 func (f *Fotmob) GetLeague(id int, tab string, leagueType string, timeZone string) (*league.League, error) {
 	if tab == "" {
 		tab = "overview"
@@ -126,7 +128,7 @@ func (f *Fotmob) GetAllLeagues() (*allleagues.AllLeagues, error) {
 	return l, nil
 }
 
-// GetTeam returns a team by id; tab, teamType and timeZone are optional
+// GetTeam returns a team by id; tab ("overview" (default), "table","fixtures","squad","stats","transfers","history"), teamType and timeZone are optional
 func (f *Fotmob) GetTeam(id int, tab string, teamType string, timeZone string) (*team.Team, error) {
 	if tab == "" {
 		tab = "overview"
