@@ -403,6 +403,42 @@ type Datum struct {
 	ToDate            *time.Time    `json:"toDate,omitempty"`
 }
 
+func (a *Datum) UnmarshalJSON(b []byte) error {
+	var s map[string]interface{}
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+
+	marketValue := s["marketValue"]
+	s["marketValue"] = nil
+
+	d, err := json.Marshal(s)
+	if err != nil {
+		return err
+	}
+
+	type Alias Datum
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(a),
+	}
+	if err := json.Unmarshal(d, &aux); err != nil {
+		return err
+	}
+
+	*a = Datum(*aux.Alias)
+
+	switch marketValue := marketValue.(type) {
+	case float64:
+		a.MarketValue = ptr.String(fmt.Sprintf("%f", marketValue))
+	case string:
+		a.MarketValue = ptr.String(marketValue)
+	}
+
+	return nil
+}
+
 type Fee struct {
 	FeeText          interface{} `json:"feeText,omitempty"`
 	LocalizedFeeText interface{} `json:"localizedFeeText,omitempty"`
