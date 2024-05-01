@@ -2,6 +2,7 @@ package fotmob
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -21,6 +22,7 @@ const baseUrl = "https://www.fotmob.com/api/"
 
 type Fotmob struct {
 	MatchesUrl               string
+	TableUrl                 string
 	LeaguesUrl               string
 	LeagueSeasonDeepStatsUrl string
 	AllLeaguesUrl            string
@@ -39,6 +41,7 @@ type Fotmob struct {
 func NewFotmob() *Fotmob {
 	return &Fotmob{
 		MatchesUrl:               baseUrl + "matches",
+		TableUrl:                 baseUrl + "tltable",
 		LeaguesUrl:               baseUrl + "leagues",
 		LeagueSeasonDeepStatsUrl: baseUrl + "leagueseasondeepstats",
 		AllLeaguesUrl:            baseUrl + "allLeagues",
@@ -116,6 +119,23 @@ func (f *Fotmob) GetLeague(id int, tab string, leagueType string, timeZone strin
 	}
 
 	return l, nil
+}
+
+// GetLeagueTable returns a league by id
+func (f *Fotmob) GetLeagueTable(leagueId int, leagueName string) (*league.DataTable, error) {
+	url := fmt.Sprintf("%s?leagueId=%d", f.TableUrl, leagueId)
+	l := []*league.TableElement{}
+	if err := f.SafeTypeCastFetch(url, &l); err != nil {
+		return nil, err
+	}
+
+	for _, v := range l[0].Data.Tables {
+		if *v.LeagueName == leagueName {
+			return v.Table, nil
+		}
+	}
+
+	return nil, errors.New("no table for league found")
 }
 
 func (f *Fotmob) GetAllLeagues() (*allleagues.AllLeagues, error) {

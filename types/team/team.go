@@ -518,9 +518,9 @@ type By struct {
 type Participant struct {
 	ID                 *int        `json:"id,omitempty"`
 	Name               *string     `json:"name,omitempty"`
-	Goals              *string     `json:"goals,omitempty"`
-	Assists            *string     `json:"assists,omitempty"`
-	Rating             *string     `json:"rating,omitempty"`
+	Goals              *int        `json:"goals,omitempty"`
+	Assists            *int        `json:"assists,omitempty"`
+	Rating             *float32    `json:"rating,omitempty"`
 	PositionID         *int        `json:"positionId,omitempty"`
 	Ccode              *string     `json:"ccode,omitempty"`
 	Cname              *string     `json:"cname,omitempty"`
@@ -530,8 +530,8 @@ type Participant struct {
 	ShowCountryFlag    *bool       `json:"showCountryFlag,omitempty"`
 	ShowTeamFlag       bool        `json:"showTeamFlag"`
 	ExcludeFromRanking bool        `json:"excludeFromRanking"`
-	Rcards             string      `json:"rcards"`
-	Ycards             string      `json:"ycards"`
+	Rcards             int         `json:"rcards"`
+	Ycards             int         `json:"ycards"`
 	TeamColors         *TeamColors `json:"teamColors,omitempty"`
 	Injured            bool        `json:"injured"`
 	Rank               *int        `json:"rank,omitempty"`
@@ -602,18 +602,21 @@ type Squad struct {
 	Midfielders []*SquadMember `json:"midfielders,omitempty"`
 }
 
+type squadGroup struct {
+	Title   string         `json:"title"`
+	Members []*SquadMember `json:"members"`
+}
+
 func (s *Squad) UnmarshalJSON(data []byte) error {
-	var rawSquad [][]interface{}
-	if err := json.Unmarshal(data, &rawSquad); err != nil {
+	fmt.Println(string(data))
+	var rawSquadGroups []squadGroup
+	if err := json.Unmarshal(data, &rawSquadGroups); err != nil {
 		return err
 	}
 
-	for _, rawParticipant := range rawSquad {
-		roleS := rawParticipant[0].(string)
-		role := Role(roleS)
-
-		participants := rawParticipant[1].([]interface{})
-		for _, rawParticipant := range participants {
+	for _, rawSquadGroup := range rawSquadGroups {
+		members := rawSquadGroup.Members
+		for _, rawParticipant := range members {
 			member := &SquadMember{}
 			d, err := json.Marshal(rawParticipant)
 			if err != nil {
@@ -622,7 +625,8 @@ func (s *Squad) UnmarshalJSON(data []byte) error {
 			if err := json.Unmarshal(d, member); err != nil {
 				return err
 			}
-			switch role {
+			member.Role = rawSquadGroup.Title
+			switch rawSquadGroup.Title {
 			case CoachRole:
 				s.Coach = member
 			case Goalkeepers:
@@ -645,18 +649,16 @@ type SquadMember struct {
 	Name      *string `json:"name,omitempty"`
 	Ccode     *string `json:"ccode,omitempty"`
 	Cname     *string `json:"cname,omitempty"`
-	Role      Role    `json:"role,omitempty"`
 	IsInjured bool    `json:"isInjured"`
+	Role      string  `json:"rolePosition"`
 }
 
-type Role string
-
 const (
-	CoachRole   Role = "coach"
-	Attackers   Role = "attackers"
-	Defenders   Role = "defenders"
-	Goalkeepers Role = "goalkeepers"
-	Midfielders Role = "midfielders"
+	CoachRole   string = "coach"
+	Attackers   string = "attackers"
+	Defenders   string = "defenders"
+	Goalkeepers string = "goalkeepers"
+	Midfielders string = "midfielders"
 )
 
 type TeamStats struct {

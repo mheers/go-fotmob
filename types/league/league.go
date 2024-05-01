@@ -54,7 +54,7 @@ type Matches struct {
 }
 
 type AllMatch struct {
-	Round     *int               `json:"round,omitempty"`
+	Round     *string            `json:"round,omitempty"`
 	RoundName *string            `json:"roundName,omitempty"`
 	PageUrl   *string            `json:"pageUrl,omitempty"`
 	ID        *string            `json:"id,omitempty"`
@@ -154,7 +154,7 @@ const (
 )
 
 type FirstUnplayedMatch struct {
-	FirstRoundWithUnplayedMatch *int    `json:"firstRoundWithUnplayedMatch,omitempty"`
+	FirstRoundWithUnplayedMatch *string `json:"firstRoundWithUnplayedMatch,omitempty"`
 	FirstUnplayedMatchIndex     *int    `json:"firstUnplayedMatchIndex,omitempty"`
 	FirstUnplayedMatchID        *string `json:"firstUnplayedMatchId,omitempty"`
 }
@@ -198,15 +198,15 @@ type TableElement struct {
 }
 
 type Data struct {
+	Composite        *bool         `json:"composite,omitempty"`
 	Ccode            *string       `json:"ccode,omitempty"`
 	LeagueID         *int          `json:"leagueId,omitempty"`
 	PageURL          *string       `json:"pageUrl,omitempty"`
 	LeagueName       *string       `json:"leagueName,omitempty"`
 	Legend           []*Legend     `json:"legend,omitempty"`
-	Ongoing          []interface{} `json:"ongoing,omitempty"`
-	Table            *DataTable    `json:"table,omitempty"`
 	TableFilterTypes []string      `json:"tableFilterTypes,omitempty"`
-	Composite        *bool         `json:"composite,omitempty"`
+	Tables           []*Tables     `json:"tables,omitempty"`
+	Ongoing          []interface{} `json:"ongoing,omitempty"`
 	SelectedSeason   *string       `json:"selectedSeason,omitempty"`
 	IsCurrentSeason  *bool         `json:"isCurrentSeason,omitempty"`
 }
@@ -216,6 +216,15 @@ type Legend struct {
 	TKey    *string `json:"tKey,omitempty"`
 	Color   *string `json:"color,omitempty"`
 	Indices []int   `json:"indices,omitempty"`
+}
+
+type Tables struct {
+	Ccode      *string    `json:"ccode,omitempty"`
+	LeagueID   *int       `json:"leagueId,omitempty"`
+	PageURL    *string    `json:"pageUrl,omitempty"`
+	LeagueName *string    `json:"leagueName,omitempty"`
+	Legend     []*Legend  `json:"legend,omitempty"`
+	Table      *DataTable `json:"table,omitempty"`
 }
 
 type DataTable struct {
@@ -285,29 +294,41 @@ type TooltipText struct {
 }
 
 type TopPlayers struct {
-	ByRating  []*By   `json:"byRating,omitempty"`
-	ByGoals   []*By   `json:"byGoals,omitempty"`
-	ByAssists []*By   `json:"byAssists,omitempty"`
-	SeeAllURL *string `json:"seeAllUrl,omitempty"`
+	ByRating  *ByRating  `json:"byRating,omitempty"`
+	ByGoals   *ByGoals   `json:"byGoals,omitempty"`
+	ByAssists *ByAssists `json:"byAssists,omitempty"`
+	SeeAllURL *string    `json:"seeAllUrl,omitempty"`
 }
 
-type By struct {
-	ID                 *int        `json:"id,omitempty"`
-	Name               *string     `json:"name,omitempty"`
-	Rank               *int        `json:"rank,omitempty"`
-	Goals              interface{} `json:"goals,omitempty"`
-	Assists            interface{} `json:"assists,omitempty"`
-	Rating             interface{} `json:"rating,omitempty"`
-	PositionID         interface{} `json:"positionId,omitempty"`
-	Ccode              interface{} `json:"ccode,omitempty"`
-	Cname              interface{} `json:"cname,omitempty"`
-	TeamID             *int        `json:"teamId,omitempty"`
-	TeamName           *string     `json:"teamName,omitempty"`
-	ShowRole           interface{} `json:"showRole,omitempty"`
-	ShowCountryFlag    interface{} `json:"showCountryFlag,omitempty"`
-	ShowTeamFlag       *bool       `json:"showTeamFlag,omitempty"`
-	ExcludeFromRanking *bool       `json:"excludeFromRanking,omitempty"`
-	Value              *float32    `json:"value,omitempty"`
+type ByRating struct {
+	ByPlayers []*ByRatingPlayer `json:"players,omitempty"`
+}
+type ByGoals struct {
+	ByPlayers []*ByGoalsPlayer `json:"players,omitempty"`
+}
+type ByAssists struct {
+	ByPlayers []*ByAssistsPlayer `json:"players,omitempty"`
+}
+
+type ByPlayer struct {
+	ID         *int        `json:"id,omitempty"`
+	Name       *string     `json:"name,omitempty"`
+	TeamID     *int        `json:"teamId,omitempty"`
+	TeamName   *string     `json:"teamName,omitempty"`
+	TeamColors interface{} `json:"teamColors,omitempty"`
+}
+
+type ByRatingPlayer struct {
+	ByPlayer
+	Rating float64 `json:"rating,omitempty"`
+}
+type ByGoalsPlayer struct {
+	ByPlayer
+	Goals int `json:"goals,omitempty"`
+}
+type ByAssistsPlayer struct {
+	ByPlayer
+	Assists int `json:"assists,omitempty"`
 }
 
 type Stats struct {
